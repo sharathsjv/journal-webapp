@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Notice</title>
+<meta name="theme-color" content="#EEF0E7" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Notice" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235F6E48'/%3E%3Ccircle cx='50' cy='34' r='7' fill='%23EEF0E7'/%3E%3Ccircle cx='50' cy='58' r='7' fill='%23EEF0E7'/%3E%3Ccircle cx='50' cy='82' r='7' fill='%23EEF0E7'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235F6E48'/%3E%3Ccircle cx='50' cy='34' r='7' fill='%23EEF0E7'/%3E%3Ccircle cx='50' cy='58' r='7' fill='%23EEF0E7'/%3E%3Ccircle cx='50' cy='82' r='7' fill='%23EEF0E7'/%3E%3C/svg%3E" />
+<style>
+  :root{
+    --ink:#262A20; --ink-soft:#5B6152; --bg:#EEF0E7; --line:#D9DCCB;
+    --accent:#5F6E48; --accent-soft:#8A9770; --surface:#F8F9F3;
+    --serif: "Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--ink); overscroll-behavior-y:none;}
+  #app{max-width:480px; margin:0 auto; min-height:100vh; position:relative;}
+  textarea::placeholder{color:var(--line);}
+  textarea{caret-color:var(--accent);}
+  button{font-family:var(--sans); cursor:pointer;}
+  .fade{transition:opacity 260ms ease;}
+  .hidden-fade{opacity:0;}
+
+  .screen{min-height:100vh; padding:36px 24px 110px; display:none;}
+  .screen.active{display:block;}
+
+  h1.title{font-family:var(--serif); font-size:30px; margin:0 0 2px; letter-spacing:-0.01em;}
+  p.subtitle{font-family:var(--sans); font-size:14.5px; color:var(--ink-soft); margin:0 0 30px;}
+
+  .empty{border:1px dashed var(--line); border-radius:14px; padding:28px 20px; text-align:center;}
+  .empty .h{font-family:var(--serif); font-size:18px; margin-bottom:6px;}
+  .empty .p{font-family:var(--sans); font-size:14px; color:var(--ink-soft);}
+
+  .entry{border-bottom:1px solid var(--line);}
+  .entry-head{width:100%; background:none; border:none; padding:16px 2px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; text-align:left;}
+  .entry-date{font-family:var(--sans); font-size:12.5px; color:var(--accent-soft); margin-bottom:4px;}
+  .entry-happened{font-family:var(--serif); font-size:18px; line-height:1.4; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;}
+  .entry-happened.expanded{-webkit-line-clamp:unset;}
+  .chev{flex-shrink:0; margin-top:6px; transition:transform 220ms ease; color:var(--ink-soft);}
+  .chev.rot{transform:rotate(180deg);}
+  .entry-body{max-height:0; overflow:hidden; transition:max-height 280ms ease;}
+  .entry-body.open{max-height:400px;}
+  .entry-body-inner{padding:0 2px 20px; display:flex; flex-direction:column; gap:16px;}
+  .label{font-family:var(--sans); font-size:12.5px; color:var(--accent-soft); margin-bottom:4px;}
+  .val{font-family:var(--sans); font-size:15.5px; line-height:1.55;}
+
+  .fab{position:fixed; bottom:26px; right:calc((100% - 480px)/2 + 24px); width:56px; height:56px; border-radius:999px; background:var(--accent); color:var(--surface); border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(38,42,32,0.25);}
+  @media (max-width:528px){ .fab{ right:24px; } }
+
+  .flow-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;}
+  .back-btn{background:none; border:none; padding:8px; margin-left:-8px; color:var(--ink-soft); display:flex;}
+  .dots{display:flex; gap:8px;}
+  .dot{width:7px; height:7px; border-radius:999px; border:1.4px solid var(--line); transition:background 220ms ease, border-color 220ms ease;}
+  .dot.on{background:var(--accent); border-color:var(--accent);}
+
+  .prompt{font-family:var(--serif); font-weight:400; font-size:30px; line-height:1.28; margin:8px 0 22px; letter-spacing:-0.01em;}
+  .field{font-family:var(--sans); font-size:17px; line-height:1.55; color:var(--ink); background:transparent; border:none; border-bottom:1.4px solid var(--line); outline:none; resize:none; padding:4px 0 14px; width:100%;}
+
+  .next-btn{margin-top:20px; float:right; display:flex; align-items:center; gap:8px; border-radius:999px; padding:13px 22px; font-size:15px; font-weight:500; border:1.4px solid var(--line); background:transparent; color:var(--ink-soft);}
+  .next-btn.ready{background:var(--accent); color:var(--surface); border:none;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="home" class="screen active fade">
+    <h1 class="title">Notice</h1>
+    <p class="subtitle">A quiet place to sort out what happened, what you think, and what you feel.</p>
+    <div id="entryList"></div>
+    <button class="fab" onclick="goToEntry()" aria-label="New entry">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+
+  <div id="entryFlow" class="screen fade" style="min-height:100vh; padding:20px 24px 28px;">
+    <div class="flow-head">
+      <button class="back-btn" onclick="stepBack()" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="dots" id="dots"></div>
+      <div style="width:36px;"></div>
+    </div>
+    <div class="fade" id="stepWrap">
+      <div style="display:flex; flex-direction:column; min-height:56vh;">
+        <h1 class="prompt" id="promptText"></h1>
+        <textarea class="field" id="fieldInput" rows="7"></textarea>
+      </div>
+    </div>
+    <button class="next-btn" id="nextBtn" onclick="stepNext()">
+      <span id="nextLabel">Continue</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = "notice-entries";
+  const STEPS = [
+    { key: "happened", prompt: "What happened?", placeholder: "Start wherever it makes sense to start." },
+    { key: "thought", prompt: "What do you make of it?", placeholder: "The story you're telling yourself about it." },
+    { key: "feeling", prompt: "What are you feeling?", placeholder: "Name it, even roughly." }
+  ];
+
+  let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  let step = 0;
+  let form = {};
+  let expandedId = null;
+  let pendingLocation = null;
+
+  function getLocation(){
+    return new Promise((resolve) => {
+      if (!navigator.geolocation){ resolve(null); return; }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
+            const data = await res.json();
+            const a = data.address || {};
+            const label = a.city || a.town || a.village || a.suburb || a.county || null;
+            const country = a.country || null;
+            const parts = [label, country].filter(Boolean);
+            resolve({ lat: latitude, lon: longitude, label: parts.length ? parts.join(", ") : null });
+          } catch(e){
+            resolve({ lat: latitude, lon: longitude, label: null });
+          }
+        },
+        () => resolve(null),
+        { timeout: 6000 }
+      );
+    });
+  }
+
+  function timeAgo(ts){
+    const d = new Date(ts), now = new Date();
+    if (d.toDateString() === now.toDateString()){
+      return d.toLocaleTimeString(undefined, {hour:"numeric", minute:"2-digit"});
+    }
+    return d.toLocaleDateString(undefined, {month:"short", day:"numeric", year: d.getFullYear()!==now.getFullYear() ? "numeric": undefined});
+  }
+
+  function renderHome(){
+    const list = document.getElementById("entryList");
+    if (entries.length === 0){
+      list.innerHTML = `<div class="empty"><div class="h">Nothing here yet</div><div class="p">Start with what happened.</div></div>`;
+      return;
+    }
+    list.innerHTML = entries.map(e => {
+      const open = expandedId === e.id;
+      return `
+        <div class="entry">
+          <button class="entry-head" onclick="toggleEntry('${e.id}')">
+            <div style="min-width:0; flex:1;">
+              <div class="entry-date">${timeAgo(e.ts)}${e.location && e.location.label ? ' · ' + escapeHtml(e.location.label) : ''}</div>
+              <div class="entry-happened ${open?'expanded':''}">${escapeHtml(e.happened)}</div>
+            </div>
+            <svg class="chev ${open?'rot':''}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="entry-body ${open?'open':''}">
+            <div class="entry-body-inner">
+              <div><div class="label">Thought</div><div class="val">${escapeHtml(e.thought)}</div></div>
+              <div><div class="label">Feeling</div><div class="val">${escapeHtml(e.feeling)}</div></div>
+            </div>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  window.toggleEntry = function(id){
+    expandedId = expandedId === id ? null : id;
+    renderHome();
+  }
+
+  window.goToEntry = function(){
+    step = 0; form = {}; pendingLocation = null;
+    switchScreen("entryFlow");
+    renderStep();
+    getLocation().then(loc => { pendingLocation = loc; });
+  }
+
+  function switchScreen(id){
+    const home = document.getElementById("home");
+    const flow = document.getElementById("entryFlow");
+    const showing = document.getElementById(id);
+    const hiding = id === "home" ? flow : home;
+    hiding.classList.add("hidden-fade");
+    setTimeout(() => {
+      hiding.classList.remove("active");
+      showing.classList.add("active");
+      requestAnimationFrame(() => showing.classList.remove("hidden-fade"));
+    }, 220);
+  }
+
+  function renderDots(){
+    document.getElementById("dots").innerHTML = STEPS.map((s,i) =>
+      `<div class="dot ${i<=step?'on':''}"></div>`).join("");
+  }
+
+  function renderStep(){
+    renderDots();
+    const wrap = document.getElementById("stepWrap");
+    wrap.classList.add("hidden-fade");
+    setTimeout(() => {
+      const s = STEPS[step];
+      document.getElementById("promptText").textContent = s.prompt;
+      const field = document.getElementById("fieldInput");
+      field.placeholder = s.placeholder;
+      field.value = form[s.key] || "";
+      wrap.classList.remove("hidden-fade");
+      setTimeout(() => field.focus(), 260);
+      updateNextBtn();
+    }, 260);
+  }
+
+  function updateNextBtn(){
+    const s = STEPS[step];
+    const val = document.getElementById("fieldInput").value.trim();
+    const btn = document.getElementById("nextBtn");
+    const ready = val.length > 0;
+    btn.classList.toggle("ready", ready);
+    document.getElementById("nextLabel").textContent = step < STEPS.length - 1 ? "Continue" : "Save";
+  }
+
+  document.getElementById("fieldInput").addEventListener("input", updateNextBtn);
+
+  window.stepNext = function(){
+    const s = STEPS[step];
+    const field = document.getElementById("fieldInput");
+    const val = field.value.trim();
+    if (!val) return;
+    form[s.key] = field.value;
+    if (step < STEPS.length - 1){
+      step++;
+      renderStep();
+    } else {
+      saveEntry(form);
+    }
+  }
+
+  window.stepBack = function(){
+    if (step === 0){
+      switchScreen("home");
+    } else {
+      step--;
+      renderStep();
+    }
+  }
+
+  function saveEntry(f){
+    const entry = { id: String(Date.now()), ts: Date.now(), location: pendingLocation, ...f };
+    entries = [entry, ...entries];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    renderHome();
+    switchScreen("home");
+  }
+
+  renderHome();
+</script>
+</body>
+</html>
