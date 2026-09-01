@@ -1,7 +1,7 @@
 // Bump this string on every deploy. Changing this file's bytes is what makes
 // the browser notice a new service worker is available at all, so the version
 // bump must happen even if you forget everything else.
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE_NAME = `notice-cache-${VERSION}`;
 
 // Keep this list in sync with the files your app actually needs offline.
