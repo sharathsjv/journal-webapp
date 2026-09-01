@@ -40,11 +40,11 @@
 
   .screen{width:100%; display:none; flex-direction:column; align-items:center;}
   .screen.active{display:flex;}
-  #journal{padding:56px 26px 130px;}
+  #journal{padding:calc(56px + env(safe-area-inset-top)) 26px 130px;}
   .subview{width:100%; display:none; flex-direction:column; align-items:center;}
   .subview.active{display:flex;}
   #write{padding-top:10px;}
-  #tasks{padding:56px 26px 130px;}
+  #tasks{padding:calc(56px + env(safe-area-inset-top)) 26px 130px;}
   .location-edit-btn{border:2px solid var(--line-strong); background:transparent; color:var(--ink-soft); width:30px; height:30px; border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0; flex-shrink:0;}
   #locationRow{gap:8px;}
   .location-btn.locating{color:var(--accent-soft);}
@@ -99,8 +99,8 @@
 
   .loading-more{padding:18px 0; text-align:center; font-family:var(--sans); font-size:12.5px; color:var(--accent-soft); width:100%;}
 
-  #entryDetail{padding:56px 26px 130px;}
-  #taskDetail{padding:56px 26px 130px;}
+  #entryDetail{padding:calc(56px + env(safe-area-inset-top)) 26px 130px;}
+  #taskDetail{padding:calc(56px + env(safe-area-inset-top)) 26px 130px;}
   .back-row{width:100%; display:flex; align-items:center; gap:10px; margin-bottom:24px;}
   .back-btn{border:none; background:transparent; color:var(--ink-soft); display:flex; align-items:center; padding:6px; flex-shrink:0;}
   .detail-happened{font-family:var(--serif); font-weight:300; font-size:20px; line-height:1.5; white-space:pre-wrap;}
