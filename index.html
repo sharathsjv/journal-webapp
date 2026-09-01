@@ -128,6 +128,13 @@
   .filter-chip{flex-shrink:0; border:2px solid var(--line-strong); background:transparent; color:var(--ink-soft); border-radius:999px; padding:7px 14px; font-size:12.5px; font-family:var(--sans); white-space:nowrap;}
   .filter-chip.active{background:var(--accent); color:var(--surface); border-color:var(--accent);}
 
+  .color-swatch{width:20px; height:20px; border-radius:50%; border:2px solid var(--line-strong); padding:0; flex-shrink:0; background:transparent; box-shadow:inset 0 0 0 2px var(--surface);}
+
+  .deadline-input{font-family:var(--sans); font-weight:300; font-size:12.5px; color:var(--ink); background:var(--bg); border:2px solid var(--line-strong); border-radius:999px; padding:7px 10px; flex-shrink:0; outline:none;}
+  .deadline-input.overdue{border-color:#C4694A; color:#C4694A;}
+  .task-deadline{font-family:var(--sans); font-weight:400; font-size:12.5px; margin:-4px 0 8px;}
+  .subtasks-box{width:100%; border:2px solid var(--line-strong); border-radius:var(--radius-lg); padding:14px; box-sizing:border-box;}
+
   .add-btn{width:100%; border:2px dashed var(--line-strong); border-radius:var(--radius-lg); padding:14px; text-align:center; color:var(--ink-soft); background:transparent; font-family:var(--sans); font-size:14px; margin-bottom:18px;}
   .add-btn-wrap{width:100%; margin-bottom:18px;}
   .inline-add-row{width:100%; display:flex; align-items:center; gap:8px;}
@@ -150,8 +157,12 @@
   .subtask-done{text-decoration:line-through; color:var(--ink-soft);}
   .subtask-empty{font-family:var(--sans); font-size:13px; color:var(--accent-soft); font-style:italic;}
 
-  .detail-subtask-row{display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--line); background:var(--bg); position:relative;}
-  .detail-subtask-row.dragging{background:var(--surface); box-shadow:0 6px 18px rgba(49,53,42,0.14); border-radius:8px;}
+  .detail-subtask-row{display:flex; align-items:center; gap:8px; padding:10px 8px; border-bottom:1px solid var(--line); background:var(--surface); position:relative;}
+  #subtaskListWrap .detail-subtask-row:first-child,
+  #dailySubtaskListWrap .detail-subtask-row:first-child{border-top-left-radius:var(--radius-md); border-top-right-radius:var(--radius-md);}
+  #subtaskListWrap .detail-subtask-row:last-child,
+  #dailySubtaskListWrap .detail-subtask-row:last-child{border-bottom-left-radius:var(--radius-md); border-bottom-right-radius:var(--radius-md); border-bottom:none;}
+  .detail-subtask-row.dragging{background:var(--bg); box-shadow:0 6px 18px rgba(49,53,42,0.14); border-radius:8px;}
   .detail-subtask-row input[type=checkbox]{width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;}
   .detail-subtask-name{flex:1; font-family:var(--sans); font-size:14.5px; color:var(--ink); min-width:0; overflow-wrap:break-word;}
   .subtask-meta{font-family:var(--sans); font-size:11px; color:var(--accent-soft); margin-top:2px;}
@@ -243,12 +254,27 @@
   </div>
 
   <div id="tasks" class="screen">
-    <div class="eyebrow" style="margin-bottom:24px;">Tasks</div>
-    <div class="filter-row" id="taskFilterRow"></div>
-    <div class="add-btn-wrap" id="newTaskRow">
-      <button class="add-btn" onclick="showNewTaskInput()">+ New task</button>
+    <div class="eyebrow" style="margin-bottom:20px;">Tasks</div>
+    <div class="view-toggle" id="taskSubtabToggle">
+      <button class="view-btn active" data-key="objectives" onclick="setTaskSubtab('objectives')">Objectives</button>
+      <button class="view-btn" data-key="daily" onclick="setTaskSubtab('daily')">Daily</button>
     </div>
-    <div id="tasksBody" style="width:100%;"></div>
+
+    <div id="objectivesSubview" class="subview active">
+      <div class="filter-row" id="taskFilterRow"></div>
+      <div class="add-btn-wrap" id="newTaskRow">
+        <button class="add-btn" onclick="showNewTaskInput()">+ New task</button>
+      </div>
+      <div id="tasksBody" style="width:100%;"></div>
+    </div>
+
+    <div id="dailySubview" class="subview">
+      <div class="view-toggle" id="dailyViewToggle" style="margin-bottom:20px;">
+        <button class="view-btn active" data-key="today" onclick="setDailyView('today')">Today</button>
+        <button class="view-btn" data-key="history" onclick="setDailyView('history')">History</button>
+      </div>
+      <div id="dailyBody" style="width:100%;"></div>
+    </div>
   </div>
 
   <div id="taskDetail" class="screen">
@@ -259,6 +285,7 @@
       <div id="taskHeadingWrap" style="flex:1; min-width:0;">
         <h1 class="title" id="taskDetailHeading" style="margin:0; font-size:20px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" onclick="renameTaskHeading()"></h1>
       </div>
+      <button class="color-swatch" id="taskDetailSwatch" onclick="cycleTaskColorDetail()" aria-label="Cycle status color"></button>
       <button class="back-btn" onclick="deleteTaskGroup()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
       </button>
@@ -287,6 +314,8 @@
 <script>
   const STORAGE_KEY = "notice-entries";
   const TASKS_KEY = "notice-tasks";
+  const DAILY_KEY = "notice-daily";
+  const DAILY_LOG_KEY = "notice-daily-log";
   const PAGE_SIZE = 20;
   const STEPS = [
     { key: "happened", prompt: "What happened?", placeholder: "Start wherever it makes sense to start." },
@@ -302,9 +331,15 @@
     { key: "started", label: "Started" },
     { key: "notstarted", label: "Not started" }
   ];
+  const TASK_COLORS = [null, "#8AA872", "#D9A441", "#C4694A", "#6C87A6"];
 
   let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]").sort((a,b)=>b.ts-a.ts);
   let taskGroups = JSON.parse(localStorage.getItem(TASKS_KEY) || "[]");
+  let dailyObjective = JSON.parse(localStorage.getItem(DAILY_KEY) || "null") || { tasks: [] };
+  let dailyLog = JSON.parse(localStorage.getItem(DAILY_LOG_KEY) || "{}");
+  let taskSubtab = "objectives";
+  let dailyView = "today";
+  let lastKnownDate = null;
   let step = 0;
   let form = {};
   let detailEntryId = null;
@@ -353,6 +388,20 @@
 
   function saveTasks(){
     localStorage.setItem(TASKS_KEY, JSON.stringify(taskGroups));
+  }
+
+  function saveDaily(){
+    localStorage.setItem(DAILY_KEY, JSON.stringify(dailyObjective));
+  }
+
+  function saveDailyLog(){
+    localStorage.setItem(DAILY_LOG_KEY, JSON.stringify(dailyLog));
+  }
+
+  function todayLogEntry(){
+    const t = todayStr();
+    if (!dailyLog[t]) dailyLog[t] = {};
+    return dailyLog[t];
   }
 
   function seededBlobs(){
@@ -783,7 +832,9 @@
       showScreen(currentTab);
     } else if (id === "taskDetail"){
       showScreen("tasks");
-      renderTasks();
+      renderCurrentTaskSubtab();
+    } else if (id === "tasks" && taskSubtab !== "objectives"){
+      setTaskSubtab("objectives", true);
     } else if (id === "tasks"){
       switchTab("journal", true);
     } else if (id === "journal" && journalView === "reflect"){
@@ -906,9 +957,23 @@
     document.getElementById("tabJournalBtn").classList.toggle("active", tab === "journal");
     document.getElementById("tabTasksBtn").classList.toggle("active", tab === "tasks");
     if (tab === "tasks"){
-      renderTasks();
+      renderCurrentTaskSubtab();
     }
     if (!skipPush) pushNavState("tab:" + tab);
+  }
+
+  function renderCurrentTaskSubtab(){
+    if (taskSubtab === "objectives") renderTasks();
+    else renderDaily();
+  }
+
+  window.setTaskSubtab = function(tab, skipPush){
+    taskSubtab = tab;
+    document.getElementById("objectivesSubview").classList.toggle("active", tab === "objectives");
+    document.getElementById("dailySubview").classList.toggle("active", tab === "daily");
+    document.querySelectorAll("#taskSubtabToggle .view-btn").forEach(b => b.classList.toggle("active", b.dataset.key === tab));
+    renderCurrentTaskSubtab();
+    if (!skipPush) pushNavState("taskSubtab:" + tab);
   }
 
   window.setJournalView = function(v, skipPush){
@@ -1015,6 +1080,114 @@
     });
   }
 
+  function formatDeadline(iso){
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + ' · ' + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  }
+
+  function toLocalInputValue(iso){
+    const d = new Date(iso);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  window.setTaskDeadline = function(gid, val){
+    const g = taskGroups.find(x => x.id === gid);
+    if (!g) return;
+    g.deadline = val ? new Date(val).toISOString() : null;
+    saveTasks();
+    renderTaskDetailSwatch();
+    const input = document.getElementById("taskDetailDeadline");
+    if (input) input.classList.toggle("overdue", !!(g.deadline && new Date(g.deadline) < new Date() && taskProgress(g).pct < 100));
+  }
+
+  window.setTaskCreated = function(gid, val){
+    const g = taskGroups.find(x => x.id === gid);
+    if (!g || !val) return;
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return;
+    g.createdAt = d.getTime();
+    g.date = d.toDateString();
+    saveTasks();
+    renderTaskDetailSwatch();
+    const input = document.getElementById("taskDetailDeadline");
+    if (input) input.classList.toggle("overdue", !!(g.deadline && new Date(g.deadline) < new Date() && taskProgress(g).pct < 100));
+  }
+
+  function nextTaskColor(c){
+    const idx = TASK_COLORS.indexOf(c || null);
+    return TASK_COLORS[(idx + 1) % TASK_COLORS.length];
+  }
+
+  // Fraction of the time between creation and deadline that has elapsed
+  // (0 = just created, 1 = deadline reached or passed). Null if no deadline.
+  function deadlineProgress(g){
+    if (!g.deadline || !g.createdAt) return null;
+    const start = g.createdAt;
+    const end = new Date(g.deadline).getTime();
+    const now = Date.now();
+    if (end <= start) return 1;
+    return Math.max(0, Math.min(1, (now - start) / (end - start)));
+  }
+
+  // Darkens a hex color toward black by `amount` (0..1) — used so the
+  // chosen status color deepens as its deadline gets closer.
+  function darkenHex(hex, amount){
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    const factor = 1 - amount * 0.55;
+    const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
+    return `rgb(${clamp(r * factor)}, ${clamp(g * factor)}, ${clamp(b * factor)})`;
+  }
+
+  // A single tint for a task's color that already accounts for deadline
+  // proximity — null if no status color has been chosen at all.
+  function accentTint(g){
+    if (!g.color) return null;
+    return darkenHex(g.color, deadlineProgress(g) || 0);
+  }
+
+  // Button visuals: a plain color when there's no deadline, or a
+  // conic-gradient "pie" fill that grows (and darkens) as the deadline
+  // approaches, matched by an equal-and-opposite unfilled track color.
+  function swatchVisuals(g){
+    if (!g.color) return { background: "transparent", borderColor: "var(--line-strong)" };
+    const frac = deadlineProgress(g);
+    const tint = darkenHex(g.color, frac || 0);
+    if (frac === null) return { background: tint, borderColor: tint };
+    const pct = Math.round(frac * 100);
+    return { background: `conic-gradient(${tint} ${pct}%, var(--line-strong) ${pct}% 100%)`, borderColor: tint };
+  }
+
+  window.cycleTaskColor = function(gid, event){
+    if (event) event.stopPropagation();
+    const g = taskGroups.find(x => x.id === gid);
+    if (!g) return;
+    g.color = nextTaskColor(g.color);
+    saveTasks();
+    renderTasks();
+  }
+
+  window.cycleTaskColorDetail = function(){
+    const g = taskGroups.find(x => x.id === detailTaskId);
+    if (!g) return;
+    g.color = nextTaskColor(g.color);
+    saveTasks();
+    renderTaskDetailSwatch();
+  }
+
+  function renderTaskDetailSwatch(){
+    const g = taskGroups.find(x => x.id === detailTaskId);
+    const el = document.getElementById("taskDetailSwatch");
+    if (!el || !g) return;
+    const v = swatchVisuals(g);
+    el.style.background = v.background;
+    el.style.borderColor = v.borderColor;
+  }
+
   function renderTaskCard(g){
     const { total, pct } = taskProgress(g);
     const subtasksHtml = g.tasks.map(t => `
@@ -1025,12 +1198,18 @@
     const metaBits = [];
     if (g.createdAt) metaBits.push(timeAgo(g.createdAt));
     if (g.location && g.location.label) metaBits.push(escapeHtml(g.location.label));
+    const tint = accentTint(g);
+    const v = swatchVisuals(g);
+    const borderStyle = tint ? `border-left:4px solid ${tint};` : '';
+    const deadlineHtml = g.deadline ? `<div class="task-deadline" style="color:${tint || 'var(--accent-soft)'};">Due by ${formatDeadline(g.deadline)}</div>` : '';
     return `
-      <div class="task-card" onclick="openTaskDetail('${g.id}')" data-gid="${g.id}">
+      <div class="task-card" style="${borderStyle}" onclick="openTaskDetail('${g.id}')" data-gid="${g.id}">
         <div class="task-card-head">
           <div class="task-heading">${escapeHtml(g.heading)}</div>
+          <button class="color-swatch" style="background:${v.background}; border-color:${v.borderColor};" onclick="cycleTaskColor('${g.id}', event)" aria-label="Cycle status color"></button>
           <div class="task-pct">${total ? pct + '%' : '—'}</div>
         </div>
+        ${deadlineHtml}
         ${metaBits.length ? `<div class="task-meta">${metaBits.join(' · ')}</div>` : ''}
         ${total ? `<div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>` : ''}
         <div class="subtask-list">${subtasksHtml || '<div class="subtask-empty">No sub-tasks yet</div>'}</div>
@@ -1089,7 +1268,7 @@
     if (!inp) return;
     const name = inp.value.trim();
     if (!name){ inp.focus(); return; }
-    const g = { id: uid(), heading: name, date: todayStr(), createdAt: Date.now(), location: null, description: "", images: [], tasks: [] };
+    const g = { id: uid(), heading: name, date: todayStr(), createdAt: Date.now(), location: null, description: "", images: [], tasks: [], color: null, deadline: null };
     taskGroups = [...taskGroups, g];
     saveTasks();
     renderTasks();
@@ -1137,7 +1316,7 @@
 
   window.closeTaskDetail = function(){
     showScreen("tasks");
-    renderTasks();
+    renderCurrentTaskSubtab();
     goBackHistory();
   }
 
@@ -1369,7 +1548,7 @@
     taskGroups = taskGroups.filter(x => x.id !== detailTaskId);
     saveTasks();
     showScreen("tasks");
-    renderTasks();
+    renderCurrentTaskSubtab();
     goBackHistory();
   }
 
@@ -1422,8 +1601,10 @@
     body.innerHTML = `
       <div class="section-block" style="margin-bottom:20px;">
         <div class="label">Created</div>
-        <div class="val" style="font-size:13.5px; margin-bottom:12px;">${g.createdAt ? dateHeading(g.createdAt) + ' · ' + timeOnly(g.createdAt) : '—'}</div>
-        <div class="location-row" id="taskLocationRow" style="justify-content:flex-start; margin-bottom:0;"></div>
+        <input type="datetime-local" class="deadline-input" id="taskDetailCreated" style="width:100%; margin-top:6px; margin-bottom:12px;" value="${g.createdAt ? toLocalInputValue(g.createdAt) : ''}" onchange="setTaskCreated('${g.id}', this.value)">
+        <div class="location-row" id="taskLocationRow" style="justify-content:flex-start; margin-bottom:12px;"></div>
+        <div class="label">Deadline</div>
+        <input type="datetime-local" class="deadline-input ${g.deadline && new Date(g.deadline) < new Date() && pct < 100 ? 'overdue' : ''}" id="taskDetailDeadline" style="width:100%; margin-top:6px;" value="${g.deadline ? toLocalInputValue(g.deadline) : ''}" onchange="setTaskDeadline('${g.id}', this.value)">
       </div>
       <div class="section-block">
         ${total ? `<div class="progress-track"><div class="progress-fill" id="taskProgressFill" style="width:${pct}%"></div></div>` : ''}
@@ -1431,9 +1612,11 @@
       </div>
       <div class="section-block">
         <div class="label">Sub-tasks</div>
-        <div id="subtaskListWrap">${subtasksHtml}</div>
-        <div class="add-btn-wrap" id="newSubtaskRow" style="margin-top:12px; margin-bottom:0;">
-          <button class="small-btn" onclick="showNewSubtaskInput()">+ Add sub-task</button>
+        <div class="subtasks-box">
+          <div id="subtaskListWrap">${subtasksHtml}</div>
+          <div class="add-btn-wrap" id="newSubtaskRow" style="margin-top:12px; margin-bottom:0;">
+            <button class="small-btn" onclick="showNewSubtaskInput()">+ Add sub-task</button>
+          </div>
         </div>
       </div>
       <div class="section-block">
@@ -1449,6 +1632,162 @@
       </div>`;
     bindTaskDescInput();
     renderTaskLocationRow();
+    renderTaskDetailSwatch();
+  }
+
+  // ---- Daily Objectives ----
+  window.setDailyView = function(v){
+    dailyView = v;
+    document.querySelectorAll("#dailyViewToggle .view-btn").forEach(b => b.classList.toggle("active", b.dataset.key === v));
+    renderDaily();
+  }
+
+  function renderDaily(){
+    const body = document.getElementById("dailyBody");
+    if (dailyView === "today") renderDailyToday(body);
+    else renderDailyHistory(body);
+  }
+
+  function renderDailyToday(body){
+    const log = todayLogEntry();
+    const total = dailyObjective.tasks.length;
+    const done = dailyObjective.tasks.filter(t => log[t.id] && log[t.id].done).length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+
+    const listHtml = total ? dailyObjective.tasks.map(t => {
+      const checked = !!(log[t.id] && log[t.id].done);
+      return `
+        <div class="detail-subtask-row" data-tid="${t.id}">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleDailySubtask('${t.id}')">
+          <div class="subtask-edit-row" id="dailySubtaskEditRow_${t.id}">
+            <div class="detail-subtask-name" onclick="renameDailySubtask('${t.id}')" style="${checked ? 'text-decoration:line-through;color:var(--ink-soft);' : ''}">${escapeHtml(t.name)}</div>
+          </div>
+          <button class="detail-subtask-del" onclick="deleteDailySubtask('${t.id}')">×</button>
+        </div>`;
+    }).join("") : `<div class="empty"><div class="h">Nothing yet</div><div class="p">Add sub-tasks you want to track every day. They uncheck automatically after midnight.</div></div>`;
+
+    body.innerHTML = `
+      ${total ? `<div class="section-block" style="margin-bottom:6px;"><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div><div class="label">${done}/${total} done today · ${pct}%</div></div>` : ''}
+      <div class="subtasks-box">
+        <div id="dailySubtaskListWrap" style="width:100%;">${listHtml}</div>
+        <div class="add-btn-wrap" id="newDailySubtaskRow" style="margin-top:12px; margin-bottom:0;">
+          <button class="small-btn" onclick="showNewDailySubtaskInput()">+ Add sub-task</button>
+        </div>
+      </div>`;
+  }
+
+  function renderDailyHistory(body){
+    const dates = Object.keys(dailyLog).sort((a, b) => new Date(b) - new Date(a));
+    const rows = [];
+    dates.forEach(dateKey => {
+      const dayEntries = dailyLog[dateKey];
+      Object.keys(dayEntries).forEach(tid => {
+        const e = dayEntries[tid];
+        rows.push({ date: dateKey, name: e.name || '(deleted)', done: !!e.done, completedAt: e.completedAt });
+      });
+    });
+    if (rows.length === 0){
+      body.innerHTML = `<div class="empty"><div class="h">Nothing logged yet</div><div class="p">Check off a sub-task and it'll show up here.</div></div>`;
+      return;
+    }
+    const trs = rows.map(r => `
+      <tr>
+        <td>${new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+        <td>${escapeHtml(r.name)}</td>
+        <td>${r.done ? 'Yes' : 'No'}</td>
+        <td>${r.completedAt ? new Date(r.completedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '—'}</td>
+      </tr>`).join("");
+    body.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Sub-task</th><th>Completed</th><th>Time</th></tr></thead>
+          <tbody>${trs}</tbody>
+        </table>
+      </div>`;
+  }
+
+  window.toggleDailySubtask = function(tid){
+    const log = todayLogEntry();
+    const t = dailyObjective.tasks.find(x => x.id === tid);
+    if (!t) return;
+    const nowDone = !(log[tid] && log[tid].done);
+    log[tid] = { done: nowDone, name: t.name, completedAt: nowDone ? Date.now() : null };
+    saveDailyLog();
+    renderDaily();
+    if (nowDone){
+      const total = dailyObjective.tasks.length;
+      const doneCount = dailyObjective.tasks.filter(x => log[x.id] && log[x.id].done).length;
+      if (total > 0 && doneCount === total) celebrate(document.getElementById("dailyBody"));
+    }
+  }
+
+  window.showNewDailySubtaskInput = function(){
+    const wrap = document.getElementById("newDailySubtaskRow");
+    if (!wrap) return;
+    wrap.innerHTML = `
+      <div class="inline-add-row">
+        <input type="text" class="inline-add-input" id="newDailySubtaskInput" placeholder="Sub-task name" />
+        <button class="inline-add-icon inline-add-confirm" onclick="submitNewDailySubtask()" aria-label="Add">${CHECK_SVG}</button>
+        <button class="inline-add-icon inline-add-cancel" onclick="cancelNewDailySubtaskInput()" aria-label="Cancel">${CLOSE_SVG}</button>
+      </div>`;
+    const inp = document.getElementById("newDailySubtaskInput");
+    inp.focus();
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter"){ e.preventDefault(); submitNewDailySubtask(); }
+      else if (e.key === "Escape"){ cancelNewDailySubtaskInput(); }
+    });
+  }
+
+  window.cancelNewDailySubtaskInput = function(){
+    const wrap = document.getElementById("newDailySubtaskRow");
+    if (wrap) wrap.innerHTML = `<button class="small-btn" onclick="showNewDailySubtaskInput()">+ Add sub-task</button>`;
+  }
+
+  window.submitNewDailySubtask = function(){
+    const inp = document.getElementById("newDailySubtaskInput");
+    if (!inp) return;
+    const name = inp.value.trim();
+    if (!name){ inp.focus(); return; }
+    dailyObjective.tasks.push({ id: uid(), name });
+    saveDaily();
+    renderDaily();
+    showNewDailySubtaskInput();
+  }
+
+  window.renameDailySubtask = function(tid){
+    const t = dailyObjective.tasks.find(x => x.id === tid);
+    if (!t) return;
+    const wrap = document.getElementById("dailySubtaskEditRow_" + tid);
+    if (!wrap) return;
+    wrap.innerHTML = `
+      <div class="inline-add-row">
+        <input type="text" class="inline-add-input" id="dailyRenameInput_${tid}" value="${escapeHtml(t.name)}" />
+        <button class="inline-add-icon inline-add-confirm" onclick="submitRenameDailySubtask('${tid}')" aria-label="Save">${CHECK_SVG}</button>
+        <button class="inline-add-icon inline-add-cancel" onclick="renderDaily()" aria-label="Cancel">${CLOSE_SVG}</button>
+      </div>`;
+    const inp = document.getElementById("dailyRenameInput_" + tid);
+    inp.focus();
+    inp.select();
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter"){ e.preventDefault(); submitRenameDailySubtask(tid); }
+      else if (e.key === "Escape"){ renderDaily(); }
+    });
+  }
+
+  window.submitRenameDailySubtask = function(tid){
+    const inp = document.getElementById("dailyRenameInput_" + tid);
+    if (!inp) return;
+    const name = inp.value.trim();
+    const t = dailyObjective.tasks.find(x => x.id === tid);
+    if (t && name) t.name = name;
+    saveDaily();
+    renderDaily();
+  }
+
+  window.deleteDailySubtask = function(tid){
+    dailyObjective.tasks = dailyObjective.tasks.filter(x => x.id !== tid);
+    saveDaily();
+    renderDaily();
   }
 
   // ---- Task-group location (view/edit) ----
@@ -1520,6 +1859,31 @@
   updateLocationLabel();
   renderWritePhotoRow();
   history.replaceState({ label: "tab:journal" }, "", "");
+
+  // ---- Daily Objectives midnight rollover ----
+  // Completion is keyed by date, so a new day naturally starts unchecked;
+  // this just makes an already-open app notice the date changed and redraw.
+  lastKnownDate = todayStr();
+  function checkDailyRollover(){
+    const now = todayStr();
+    if (now !== lastKnownDate){
+      lastKnownDate = now;
+      if (currentTab === "tasks" && taskSubtab === "daily") renderDaily();
+    }
+  }
+
+  // ---- Keep deadline-urgency colors current while the app stays open ----
+  function refreshDeadlineColors(){
+    if (currentTab !== "tasks") return;
+    const activeScreen = document.querySelector(".screen.active");
+    if (activeScreen && activeScreen.id === "tasks" && taskSubtab === "objectives") renderTasks();
+    else if (activeScreen && activeScreen.id === "taskDetail") renderTaskDetailSwatch();
+  }
+
+  setInterval(() => { checkDailyRollover(); refreshDeadlineColors(); }, 30000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible"){ checkDailyRollover(); refreshDeadlineColors(); }
+  });
 
   // ---- PWA update handling ----
   let waitingWorker = null;
